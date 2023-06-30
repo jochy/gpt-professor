@@ -8,7 +8,7 @@ const { scoreChunk: zerogpt } = require('./zerogpt');
 const MAX_CHUNK_SIZE = 50000;
 const MIN_CHUNK_SIZE = 1000;
 
-const ENGINES = [{ name: 'ZEROGPT', scoreChunk: zerogpt },];
+const ENGINES = [{ name: 'ZEROGPT', scoreChunk: zerogpt }];
 
 async function measure(args, options, command) {
     // Retrieve all files to analyse
@@ -45,7 +45,7 @@ async function _analyseFile(file, options) {
     let totalFakeScore = totalWords > 0 ? chunksScores.reduce((acc, curr) => acc + (curr.score * curr.words), 0) / totalWords : 0;
 
     // Print result
-    console.log(`${file} => ${totalFakeScore.toFixed(2)}% AI generated content for ${totalWords} detected words`);
+    console.log(`${file} => ${totalFakeScore.toFixed(2)}% of potential AI generated content for ${totalWords} detected words`);
 }
 
 function _isEngineSupported(options, engine) {
