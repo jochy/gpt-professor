@@ -10,9 +10,10 @@ String.prototype.trim = function () {
 };
 
 program
-    .command('measure')
+    .command('measure-generated-content')
     .description('Detect a % of use of chat gpt')
-    .argument('<file>', 'File to analyze')
+    .argument('<file>', 'File or folder to analyse')
+    .option('-c, --concurrency', 'Number of concurrent requests', 4)
     .action(async (args, options, command) => await measure(args, options, command));
 
 program.parse();

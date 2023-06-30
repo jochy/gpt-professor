@@ -1,14 +1,24 @@
 const { default: axios } = require('axios');
 const fs = require('fs');
+const path = require('path');
 const pdf = require('pdf-parse');
 var Promise = require("bluebird");
 
 const MAX_CHUNK_SIZE = 50000;
-const CONCURRENCY = 4;
 
 async function measure(args, options, command) {
+    // Retrieve all files to analyse
+    const files = _listFilesRecursively(args);
+
+    // Analyse each file
+    for (let file of files) {
+        await _analyseFile(file, options);
+    }
+}
+
+async function _analyseFile(file, options) {
     // Extract content
-    const content = (await _extractContent(args))
+    const content = (await _extractContent(file))
         .replaceAll("\n\n", "\n")
         .replaceAll("  ", " ");
 
@@ -32,14 +42,14 @@ async function measure(args, options, command) {
             words: parseInt(res.data.data.aiWords),
             score: Number(res.data.data.fakePercentage)
         });
-    }, { concurrency: CONCURRENCY });
+    }, { concurrency: options.concurrency });
 
     // Now, compute fake score for the whole content
     let totalWords = chatGptSum.reduce((acc, curr) => acc + curr.words, 0);
-    let totalFakeScore = chatGptSum.reduce((acc, curr) => acc + (curr.score * curr.words), 0) / totalWords;
+    let totalFakeScore = totalWords > 0 ? chatGptSum.reduce((acc, curr) => acc + (curr.score * curr.words), 0) / totalWords : 0;
 
     // Print result
-    console.log(`${totalFakeScore.toFixed(2)}% AI for ${totalWords} detected words`);
+    console.log(`${file} => ${totalFakeScore.toFixed(2)}% AI generated content for ${totalWords} detected words`);
 }
 
 function _splitStringByWords(string, maxLength) {
@@ -71,7 +81,7 @@ async function _extractContent(filepath) {
     }
 
     // TODO : handle other file types
-    return fs.readFileSync(filepath);
+    return fs.readFileSync(filepath, 'utf8');
 }
 
 function _render_page(pageData) {
@@ -91,6 +101,27 @@ function _render_page(pageData) {
             }
             return text;
         });
+}
+
+function _listFilesRecursively(dir, checkIfRootIsDirectory = true) {
+    if (checkIfRootIsDirectory && !fs.statSync(dir).isDirectory()) {
+        return [dir];
+    }
+
+    const files = [];
+
+    fs.readdirSync(dir).forEach(file => {
+        const filePath = path.join(dir, file);
+        const stats = fs.statSync(filePath);
+
+        if (stats.isDirectory()) {
+            files.push(..._listFilesRecursively(filePath, false)); // Recursively call the function for subdirectories
+        } else {
+            files.push(filePath);
+        }
+    });
+
+    return files;
 }
 
 module.exports = {
