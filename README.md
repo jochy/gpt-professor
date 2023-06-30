@@ -10,7 +10,8 @@ Tool used to create a simple CLI around ChatGPT, in order to help any kind of te
 * Arg: The path of the file or folder to scan
 * Options:
   * -c, --concurrency: how many concurrent requests
-* Example: ```
+* Example: 
+```
 node index.js measure-generated-content /tmp/my-folder-to-scan
 
 /tmp/my-folder-to-scan/file_test/.keep => 0.00% AI generated content for 0 detected words
