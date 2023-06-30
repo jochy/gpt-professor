@@ -2,9 +2,13 @@ const { default: axios } = require('axios');
 const fs = require('fs');
 const path = require('path');
 const pdf = require('pdf-parse');
-var Promise = require("bluebird");
+const Promise = require("bluebird");
+const { scoreChunk: zerogpt } = require('./zerogpt');
 
 const MAX_CHUNK_SIZE = 50000;
+const MIN_CHUNK_SIZE = 1000;
+
+const ENGINES = [{ name: 'ZEROGPT', scoreChunk: zerogpt },];
 
 async function measure(args, options, command) {
     // Retrieve all files to analyse
@@ -23,33 +27,57 @@ async function _analyseFile(file, options) {
         .replaceAll("  ", " ");
 
     // Split the content into chunks
-    let chunks = content.split("\n").flatMap(paragraph => _splitStringByWords(paragraph, MAX_CHUNK_SIZE));
+    let chunks = _splitContentIntoChunks(content);
 
     // Compute fake score for each chunk
-    let chatGptSum = [];
+    let chunksScores = [];
     await Promise.map(chunks, async chunk => {
-        const res = await axios.post('https://api.zerogpt.com/api/detect/detectText', {
-            input_text: chunk
-        }, {
-            headers: {
-                authority: 'api.zerogpt.com',
-                origin: 'https://www.zerogpt.com',
-                referer: 'https://www.zerogpt.com/',
-                'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+        // For each supported engine, compute fake score for the chunk
+        for (let engine of ENGINES) {
+            if (_isEngineSupported(options, engine)) {
+                chunksScores.push(await engine.scoreChunk(chunk, options));
             }
-        });
-        chatGptSum.push({
-            words: parseInt(res.data.data.aiWords),
-            score: Number(res.data.data.fakePercentage)
-        });
+        }
     }, { concurrency: options.concurrency });
 
     // Now, compute fake score for the whole content
-    let totalWords = chatGptSum.reduce((acc, curr) => acc + curr.words, 0);
-    let totalFakeScore = totalWords > 0 ? chatGptSum.reduce((acc, curr) => acc + (curr.score * curr.words), 0) / totalWords : 0;
+    let totalWords = chunksScores.reduce((acc, curr) => acc + curr.words, 0);
+    let totalFakeScore = totalWords > 0 ? chunksScores.reduce((acc, curr) => acc + (curr.score * curr.words), 0) / totalWords : 0;
 
     // Print result
     console.log(`${file} => ${totalFakeScore.toFixed(2)}% AI generated content for ${totalWords} detected words`);
+}
+
+function _isEngineSupported(options, engine) {
+    return options.only === "" || options.only == null || options.only.includes(engine.name);
+}
+
+function _splitContentIntoChunks(content) {
+    let tmpChunks = content.split("\n").flatMap(paragraph => _splitStringByWords(paragraph, MAX_CHUNK_SIZE));
+
+    // Re-arrange chunks : make sure all chunks are between MIN_CHUNK_SIZE and MAX_CHUNK_SIZE
+    let chunks = [];
+    for (let i = 0; i < tmpChunks.length; i++) {
+        // If chunk matches requirements
+        if (tmpChunks[i].length >= MIN_CHUNK_SIZE && tmpChunks[i].length <= MAX_CHUNK_SIZE) {
+            chunks.push(tmpChunks[i]);
+        }
+        // If chunk is too small, try to concatenate it with the next one
+        else if (tmpChunks[i].length < MIN_CHUNK_SIZE) {
+            if (i + 1 < tmpChunks.length) {
+                tmpChunks[i + 1] = tmpChunks[i] + '\n ' + tmpChunks[i + 1];
+            } else {
+                // Can't do better: chunk is still too small :'(
+                chunks.push(tmpChunks[i]);
+            }
+        }
+        // If chunk is too big
+        else if (tmpChunks[i].length > MAX_CHUNK_SIZE) {
+            chunks.push(...[_splitStringByWords(tmpChunks[i], MAX_CHUNK_SIZE / (tmpChunks[i].length / MAX_CHUNK_SIZE))]);
+        }
+    }
+
+    return chunks;
 }
 
 function _splitStringByWords(string, maxLength) {

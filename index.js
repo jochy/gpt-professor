@@ -1,5 +1,5 @@
 const { program } = require('commander');
-const { measure } = require('./commands/measure.js');
+const { measure } = require('./commands/measure/measure.js');
 
 String.prototype.replaceAll = function (target, replacement) {
     return this.split(target).join(replacement);
@@ -14,6 +14,7 @@ program
     .description('Detect a % of use of chat gpt')
     .argument('<file>', 'File or folder to analyse')
     .option('-c, --concurrency', 'Number of concurrent requests', 4)
+    .option('-o, --only [STRING]', 'Only scan using the specified engine (currently, only ZEROGPT is supported). Separate by ,','',)
     .action(async (args, options, command) => await measure(args, options, command));
 
 program.parse();
