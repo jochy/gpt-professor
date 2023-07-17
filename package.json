@@ -1,13 +1,16 @@
 {
-  "name": "teacher-gpt-tooling",
-  "version": "0.0.1",
+  "name": "gpt-professor",
+  "version": "0.0.5",
   "description": "Tool used to create a simple CLI around ChatGPT, in order to help any kind of teaching activity",
   "main": "index.js",
+  "bin": "./index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "measure": "node index.js measure-generated-content file_test"
+    "measure": "node index.js measure-generated-content file_test",
+    "autograde": "node index.js autograde -c file_test/autograde.json -r file_test/tp6 --shrink -o file_test/professorgpt.json"
   },
   "keywords": [
+    "professor",
     "teaching",
     "chatgpt",
     "gpt",
@@ -20,6 +23,19 @@
     "axios": "^1.4.0",
     "bluebird": "^3.7.2",
     "commander": "^11.0.0",
+    "dotenv": "^16.3.1",
+    "globby": "^13.2.2",
+    "openai": "^3.3.0",
     "pdf-parse": "^1.1.1"
+  },
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist",
+    "strict": true,
+    "target": "es6",
+    "module": "commonjs",
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node"
   }
 }

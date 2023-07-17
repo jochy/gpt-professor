@@ -1,20 +1,27 @@
+#!/usr/bin/env node
+
 const { program } = require('commander');
 const { measure } = require('./commands/measure/measure.js');
+const { autograde } = require('./commands/autograde/autograde.js');
 
-String.prototype.replaceAll = function (target, replacement) {
-    return this.split(target).join(replacement);
-};
-
-String.prototype.trim = function () {
-    return String(this).replace(/^\s+|\s+$/g, '');
-};
+require('dotenv').config();
 
 program
+    .version(require('./package.json').version)
     .command('measure-generated-content')
     .description('Detect a % of use of chat gpt')
     .argument('<file>', 'File or folder to analyse')
     .option('-c, --concurrency', 'Number of concurrent requests', 4)
-    .option('-o, --only [STRING]', 'Only scan using the specified engine (currently, only ZEROGPT is supported). Separate by ,','',)
-    .action(async (args, options, command) => await measure(args, options, command));
+    .option('-o, --only [STRING]', 'Only scan using the specified engine (currently, only ZEROGPT is supported). Separate by ,', '',)
+    .action((args, options, command) => measure(args, options, command));
 
-program.parse();
+program
+    .command('autograde')
+    .description('Automatically grade a student code based on criteria')
+    .requiredOption('-c, --config [STRING]', 'Path to the config file')
+    .requiredOption('-r, --repo [STRING]', 'Path to the student code')
+    .option('-o, --output [STRING]', 'Path to the output file, console if not set')
+    .option('-s, --shrink', 'Indicates if we should shrink the code before sending it')
+    .action((options, command) => autograde(options, command));
+
+program.parse(process.argv);
