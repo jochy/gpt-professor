@@ -21,7 +21,6 @@ program
     .requiredOption('-c, --config [STRING]', 'Path to the config file')
     .requiredOption('-r, --repo [STRING]', 'Path to the student code')
     .option('-o, --output [STRING]', 'Path to the output file, console if not set')
-    .option('-s, --shrink', 'Indicates if we should shrink the code before sending it')
     .action((options, command) => autograde(options, command));
 
 program.parse(process.argv);

@@ -15,7 +15,7 @@ $ gpt-professor --version
 
 ## Measure percentage of generated content
 
-* Name: measure-generated-content
+* Name: measure-generated-conterfiçk,fffvç,çv,ç,fçfçr!trdf                fvpmù^nt
 * Description: This tool will scan a folder (or a file) and will compute the percentage of AI generated content. Relies on zerogpt api.
 * Arg: The path of the file or folder to scan
 * Options:
@@ -42,6 +42,7 @@ gpt-professor measure-generated-content /tmp/my-folder-to-scan
   * -o, --output: where to store the autograde result (by default its output in the console)
   * -s, --shrink: does the script try to shrink files before sending them to the AI (to reduce token and billing)
 * Required env var: `OPENAI_API_KEY` (see [https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key))
+* Optional env var: `OPENAI_BASE_URL` to set the endpoint to call (by default, its openai api production)
 * Example: 
   `autograde.json` (config file)
   ```
@@ -81,7 +82,7 @@ gpt-professor measure-generated-content /tmp/my-folder-to-scan
 
   Command: 
   ```
-  gpt-professor autograde -c file_test/autograde.json -r file_test/tp6 --shrink -o file_test/professorgpt.json
+  gpt-professor autograde -c file_test/autograde.json -r file_test/tp6 -o file_test/professorgpt.json
 
   Will send files to AI: [file_test/tp6/src/App.vue,file_test/tp6/src/main.js,file_test/tp6/src/router.js,file_test/tp6/src/store.js,file_test/tp6/src/components/TodoDetail.vue,file_test/tp6/src/components/home.vue,file_test/tp6/src/components/task.vue]
 

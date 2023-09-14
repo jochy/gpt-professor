@@ -3,13 +3,13 @@ const { Configuration, OpenAIApi } = require("openai");
 const path = require('path');
 
 async function autograde(options, command) {
-    const { config, repo, output, shrink } = options;
+    const { config, repo, output } = options;
 
     const settings = readJson(config);
     const filesToSend = await getFiles(repo, settings.files.include_patterns, settings.files.exclude_patterns);
     console.log("Will send files to AI: [" + filesToSend + "]");
 
-    const autograde = await askAiToAutograde(settings, filesToSend, repo, shrink);
+    const autograde = await askAiToAutograde(settings, filesToSend, repo);
     if (output != null) {
         fs.writeFileSync(output, autograde);
     }
@@ -18,17 +18,18 @@ async function autograde(options, command) {
 }
 
 
-async function askAiToAutograde(settings, files, repo, shrink) {
+async function askAiToAutograde(settings, files, repo) {
     const configuration = new Configuration({
         apiKey: process.env.OPENAI_API_KEY,
+        
     });
-    const openai = new OpenAIApi(configuration);
+    const openai = new OpenAIApi(configuration, process.env.OPENAI_BASE_URL);
     const messagesToSend = [
         { role: "system", content: "You will be in charge to grade a student project based on criteria. First, I'll send you the files, then I'll send you the criteria and then I will ask you to grade the project. Please do not answer when you are not asked to." }
     ];
 
     for (let file of files) {
-        messagesToSend.push(filepathToAiMessage(repo, file, shrink));
+        messagesToSend.push(filepathToAiMessage(repo, file));
     }
     messagesToSend.push(askGradeMessage(settings));
     //console.log(messagesToSend.map(it => it.content).join("\n"))
@@ -52,29 +53,15 @@ async function getFiles(repo, included, excluded) {
     })).map(it => path.join(repo, it));
 }
 
-function filepathToAiMessage(repo, filepath, shrink) {
+function filepathToAiMessage(repo, filepath) {
     return {
         role: "user",
-        content: `Location: ${filepath.replaceAll(`${repo}${path.sep}`, "")}\nContent:\n${sanitizeFile(filepath, shrink)}`
+        content: `Location: ${filepath.replaceAll(`${repo}${path.sep}`, "")}\nContent:\n${sanitizeFile(filepath)}`
     }
 }
 
-// TODO: shrink based on file type
-function sanitizeFile(filepath, shrink) {
-    let value = fs.readFileSync(filepath, 'utf8');
-    if (!shrink) return value.trim();
-
-    let length = value.length;
-    do {
-        length = value.length;
-        value = value.replaceAll('\t', ' ')
-            .replaceAll('\n\n', '\n')
-            .replaceAll('\n ', '\n')
-            .replaceAll('  ', ' ')
-            .trim();
-    }
-    while (value.length !== length);
-    return value;
+function sanitizeFile(filepath) {
+    return fs.readFileSync(filepath, 'utf8').trim();
 }
 
 function askGradeMessage(settings) {
