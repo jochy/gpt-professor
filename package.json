@@ -5,7 +5,7 @@
   "main": "index.js",
   "bin": "./index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "exit 0",
     "measure": "node index.js measure-generated-content file_test",
     "autograde": "node index.js autograde -c file_test/autograde.json -r file_test/tp6 -o file_test/professorgpt.json --minify"
   },
