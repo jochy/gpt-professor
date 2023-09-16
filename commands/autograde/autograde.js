@@ -14,6 +14,7 @@ async function autograde(options, command) {
     if (output != null) {
         fs.writeFileSync(output, autograde);
     }
+
     console.log("\nResult:")
     console.log(autograde);
 }
@@ -26,7 +27,7 @@ async function askAiToAutograde(settings, files, repo, minify, debug) {
     });
     const openai = new OpenAIApi(configuration, process.env.OPENAI_BASE_URL);
     const messagesToSend = [
-        { role: "system", content: "You will be in charge to grade a student project based on criteria. First, I'll send you the files, then I'll send you the criteria and then I will ask you to grade the project. Please do not answer when you are not asked to." }
+        { role: "system", content: "You will be in charge to grade a student project based on some criteria (in csv format)." }
     ];
 
     for (let file of files) {
@@ -34,6 +35,7 @@ async function askAiToAutograde(settings, files, repo, minify, debug) {
     }
     messagesToSend.push(askGradeMessage(settings, debug));
     if (debug) {
+        console.log("Messages to send:")
         console.log(messagesToSend.map(it => it.content).join("\n"))
     }
 
@@ -45,6 +47,7 @@ async function askAiToAutograde(settings, files, repo, minify, debug) {
     const response = chatCompletion.data.choices[0].message.content;
 
     if (debug) {
+        console.log("Response from AI:");
         console.log(response);
     }
 
@@ -80,18 +83,19 @@ async function sanitizeFile(filepath, minify) {
 }
 
 function askGradeMessage(settings, debug) {
-    let criteriaTab = "id;prompt;points";
+    let criteriaTab = "id;criteria;points";
     for (let crit of Object.keys(settings.criteria)) {
         criteriaTab += `\n${crit};${settings.criteria[crit].prompt};${settings.criteria[crit].points}`;
     }
 
     if (debug) {
+        console.log("Criteria tab:")
         console.log(criteriaTab);
     }
 
     return {
         role: "user",
-        content: `Grade the project based on the following criteria:\n${criteriaTab}\n\nCan you just output a json with this structure: { ID: { "status": STATUS, "points": POINTS } }, where ID is the id in the previous tab, status is SUCCESS or FAIL and points is the number of points you give to this criteria?`
+        content: `Grade the project based on the following criteria csv table:\n${criteriaTab}\n\nOutput a json with this structure: { ID: { "status": STATUS, "points": POINTS } }, where ID is the id in the criteria tab, status is SUCCESS or FAIL and points is the number of points you give to this criteria (0 if criteria is not met)?`
     }
 }
 
