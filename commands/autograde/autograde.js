@@ -83,9 +83,9 @@ async function sanitizeFile(filepath, minify) {
 }
 
 function askGradeMessage(settings, debug) {
-    let criteriaTab = "id;criteria;points";
+    let criteriaTab = "id;criteria";
     for (let crit of Object.keys(settings.criteria)) {
-        criteriaTab += `\n${crit};${settings.criteria[crit].prompt};${settings.criteria[crit].points}`;
+        criteriaTab += `\n${crit};${settings.criteria[crit].prompt}`;
     }
 
     if (debug) {
@@ -95,7 +95,7 @@ function askGradeMessage(settings, debug) {
 
     return {
         role: "user",
-        content: `Grade the project based on the following criteria csv table:\n${criteriaTab}\n\nOutput a json with this structure: { ID: { "status": STATUS, "points": POINTS } }, where ID is the id in the criteria tab, status is SUCCESS or FAIL and points is the number of points you give to this criteria (0 if criteria is not met)?`
+        content: `Grade the project based on the following criteria csv table:\n${criteriaTab}\n\nOutput a json with this structure: { ID: { "status": STATUS } }, where ID is the id in the criteria tab, status is SUCCESS or FAIL?`
     }
 }
 
