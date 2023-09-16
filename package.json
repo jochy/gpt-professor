@@ -1,13 +1,13 @@
 {
   "name": "gpt-professor",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Tool used to create a simple CLI around ChatGPT, in order to help any kind of teaching activity",
   "main": "index.js",
   "bin": "./index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "measure": "node index.js measure-generated-content file_test",
-    "autograde": "node index.js autograde -c file_test/autograde.json -r file_test/tp6 -o file_test/professorgpt.json"
+    "autograde": "node index.js autograde -c file_test/autograde.json -r file_test/tp6 -o file_test/professorgpt.json --minify"
   },
   "keywords": [
     "professor",
@@ -20,13 +20,19 @@
   "author": "Alexandre Dubois (jochy)",
   "license": "MIT",
   "dependencies": {
+    "autoprefixer": "^10.4.15",
     "axios": "^1.4.0",
     "bluebird": "^3.7.2",
     "commander": "^11.0.0",
+    "cssnano": "^6.0.1",
+    "cssnano-preset-lite": "^3.0.0",
     "dotenv": "^16.3.1",
     "globby": "^13.2.2",
+    "jsdom": "^22.1.0",
+    "minify-xml": "^4.0.0",
     "openai": "^3.3.0",
-    "pdf-parse": "^1.1.1"
+    "pdf-parse": "^1.1.1",
+    "postcss": "^8.4.29"
   },
   "compilerOptions": {
     "rootDir": ".",

@@ -21,6 +21,7 @@ program
     .requiredOption('-c, --config [STRING]', 'Path to the config file')
     .requiredOption('-r, --repo [STRING]', 'Path to the student code')
     .option('-o, --output [STRING]', 'Path to the output file, console if not set')
+    .option('--minify', 'Indicates if we should minify the code before submitting it')
     .action((options, command) => autograde(options, command));
 
 program.parse(process.argv);

@@ -1,15 +1,16 @@
 const fs = require('fs');
 const { Configuration, OpenAIApi } = require("openai");
 const path = require('path');
+const { minifyContent } = require('../../utils/minify');
 
 async function autograde(options, command) {
-    const { config, repo, output } = options;
+    const { config, repo, output, minify } = options;
 
     const settings = readJson(config);
     const filesToSend = await getFiles(repo, settings.files.include_patterns, settings.files.exclude_patterns);
     console.log("Will send files to AI: [" + filesToSend + "]");
 
-    const autograde = await askAiToAutograde(settings, filesToSend, repo);
+    const autograde = await askAiToAutograde(settings, filesToSend, repo, minify);
     if (output != null) {
         fs.writeFileSync(output, autograde);
     }
@@ -18,7 +19,7 @@ async function autograde(options, command) {
 }
 
 
-async function askAiToAutograde(settings, files, repo) {
+async function askAiToAutograde(settings, files, repo, minify) {
     const configuration = new Configuration({
         apiKey: process.env.OPENAI_API_KEY,
         
@@ -29,7 +30,7 @@ async function askAiToAutograde(settings, files, repo) {
     ];
 
     for (let file of files) {
-        messagesToSend.push(filepathToAiMessage(repo, file));
+        messagesToSend.push(await filepathToAiMessage(repo, file, minify));
     }
     messagesToSend.push(askGradeMessage(settings));
     //console.log(messagesToSend.map(it => it.content).join("\n"))
@@ -53,15 +54,21 @@ async function getFiles(repo, included, excluded) {
     })).map(it => path.join(repo, it));
 }
 
-function filepathToAiMessage(repo, filepath) {
+async function filepathToAiMessage(repo, filepath, minify) {
     return {
         role: "user",
-        content: `Location: ${filepath.replaceAll(`${repo}${path.sep}`, "")}\nContent:\n${sanitizeFile(filepath)}`
+        content: `Location: ${filepath.replaceAll(`${repo}${path.sep}`, "")}\nContent:\n${await sanitizeFile(filepath, minify)}`
     }
 }
 
-function sanitizeFile(filepath) {
-    return fs.readFileSync(filepath, 'utf8').trim();
+async function sanitizeFile(filepath, minify) {
+    let value = fs.readFileSync(filepath, 'utf8').trim();
+
+    if (minify) {
+        value = await minifyContent(filepath, value);
+    }
+
+    return value;
 }
 
 function askGradeMessage(settings) {
