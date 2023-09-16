@@ -32,7 +32,7 @@ async function askAiToAutograde(settings, files, repo, minify, debug) {
     for (let file of files) {
         messagesToSend.push(await filepathToAiMessage(repo, file, minify));
     }
-    messagesToSend.push(askGradeMessage(settings));
+    messagesToSend.push(askGradeMessage(settings, debug));
     if (debug) {
         console.log(messagesToSend.map(it => it.content).join("\n"))
     }
@@ -47,7 +47,7 @@ async function askAiToAutograde(settings, files, repo, minify, debug) {
     if (debug) {
         console.log(response);
     }
-    
+
     return response;
 }
 
@@ -79,11 +79,16 @@ async function sanitizeFile(filepath, minify) {
     return value;
 }
 
-function askGradeMessage(settings) {
+function askGradeMessage(settings, debug) {
     let criteriaTab = "id;prompt;points";
     for (let crit of Object.keys(settings.criteria)) {
         criteriaTab += `\n${crit};${settings.criteria[crit].prompt};${settings.criteria[crit].points}`;
     }
+
+    if (debug) {
+        console.log(criteriaTab);
+    }
+
     return {
         role: "user",
         content: `Grade the project based on the following criteria:\n${criteriaTab}\n\nCan you just output a json with this structure: { ID: { "status": STATUS, "points": POINTS } }, where ID is the id in the previous tab, status is SUCCESS or FAIL and points is the number of points you give to this criteria?`
