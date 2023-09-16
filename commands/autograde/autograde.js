@@ -4,13 +4,13 @@ const path = require('path');
 const { minifyContent } = require('../../utils/minify');
 
 async function autograde(options, command) {
-    const { config, repo, output, minify } = options;
+    const { config, repo, output, minify, debug } = options;
 
     const settings = readJson(config);
     const filesToSend = await getFiles(repo, settings.files.include_patterns, settings.files.exclude_patterns);
     console.log("Will send files to AI: [" + filesToSend + "]");
 
-    const autograde = await askAiToAutograde(settings, filesToSend, repo, minify);
+    const autograde = await askAiToAutograde(settings, filesToSend, repo, minify, debug);
     if (output != null) {
         fs.writeFileSync(output, autograde);
     }
@@ -19,10 +19,10 @@ async function autograde(options, command) {
 }
 
 
-async function askAiToAutograde(settings, files, repo, minify) {
+async function askAiToAutograde(settings, files, repo, minify, debug) {
     const configuration = new Configuration({
         apiKey: process.env.OPENAI_API_KEY,
-        
+
     });
     const openai = new OpenAIApi(configuration, process.env.OPENAI_BASE_URL);
     const messagesToSend = [
@@ -33,14 +33,22 @@ async function askAiToAutograde(settings, files, repo, minify) {
         messagesToSend.push(await filepathToAiMessage(repo, file, minify));
     }
     messagesToSend.push(askGradeMessage(settings));
-    //console.log(messagesToSend.map(it => it.content).join("\n"))
-    
+    if (debug) {
+        console.log(messagesToSend.map(it => it.content).join("\n"))
+    }
+
     const chatCompletion = await openai.createChatCompletion({
         model: "gpt-3.5-turbo",
         messages: messagesToSend,
     });
 
-    return chatCompletion.data.choices[0].message.content;
+    const response = chatCompletion.data.choices[0].message.content;
+
+    if (debug) {
+        console.log(response);
+    }
+    
+    return response;
 }
 
 async function getFiles(repo, included, excluded) {
