@@ -27,6 +27,7 @@ jobs:
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
+      - run: npm config set git-tag-version=false
       - run: npm version ${{  github.ref_name }}
       - run: npm ci
       - run: npm publish
