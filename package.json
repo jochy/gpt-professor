@@ -7,7 +7,8 @@
   "scripts": {
     "test": "exit 0",
     "measure": "node index.js measure-generated-content file_test",
-    "autograde": "node index.js autograde -c file_test/autograde.json -r file_test/tp6 -o file_test/professorgpt.json --minify"
+    "autograde": "node index.js autograde -c file_test/autograde2.json -r file_test -o file_test/professorgpt.json --minify --debug",
+    "bard-autograde": "node index.js bard-autograde -c file_test/autograde2.json -r file_test -o file_test/professorgpt.json --minify --debug"
   },
   "keywords": [
     "professor",
@@ -22,17 +23,20 @@
   "dependencies": {
     "autoprefixer": "^10.4.15",
     "axios": "^1.4.0",
+    "bard-ai": "^2.0.3",
     "bluebird": "^3.7.2",
     "commander": "^11.0.0",
     "cssnano": "^6.0.1",
     "cssnano-preset-lite": "^3.0.0",
     "dotenv": "^16.3.1",
     "globby": "^13.2.2",
+    "googlebard": "^1.0.7",
     "jsdom": "^22.1.0",
     "minify-xml": "^4.0.0",
     "openai": "^3.3.0",
     "pdf-parse": "^1.1.1",
-    "postcss": "^8.4.29"
+    "postcss": "^8.4.29",
+    "uuid": "^9.0.1"
   },
   "compilerOptions": {
     "rootDir": ".",

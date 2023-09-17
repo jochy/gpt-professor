@@ -27,13 +27,13 @@ async function askAiToAutograde(settings, files, repo, minify, debug) {
     });
     const openai = new OpenAIApi(configuration, process.env.OPENAI_BASE_URL);
     const messagesToSend = [
-        { role: "system", content: "You will be in charge to grade a student project based on some criteria (in csv format)." }
+        { role: "system", content: `This is a criteria list used to grade a project: ${JSON.stringify(settings.criteria)}. Each criteria has a name (the json key) and a condition (condition field). A criteria met when the condition is TRUE. Your answer should be only a JSON structure: { NAME: { "status": STATUS } }, where NAME is the criteria name and status is SUCCESS or FAIL. If the criteria's condition is met, then the status is SUCCESS otherwise the status if FAIL. If something is missing, consider the criteria's condition as FAIL.` }
     ];
 
     for (let file of files) {
         messagesToSend.push(await filepathToAiMessage(repo, file, minify));
     }
-    messagesToSend.push(askGradeMessage(settings, debug));
+
     if (debug) {
         console.log("Messages to send:")
         console.log(messagesToSend.map(it => it.content).join("\n"))
@@ -42,6 +42,7 @@ async function askAiToAutograde(settings, files, repo, minify, debug) {
     const chatCompletion = await openai.createChatCompletion({
         model: "gpt-3.5-turbo",
         messages: messagesToSend,
+        temperature: 1,
     });
 
     const response = chatCompletion.data.choices[0].message.content;
@@ -83,10 +84,11 @@ async function sanitizeFile(filepath, minify) {
 }
 
 function askGradeMessage(settings, debug) {
-    let criteriaTab = "id;criteria";
+    let criteriaTab = "name;condition";
     for (let crit of Object.keys(settings.criteria)) {
-        criteriaTab += `\n${crit};${settings.criteria[crit].prompt}`;
+        criteriaTab += `\n${crit};${settings.criteria[crit].condition}`;
     }
+    criteriaTab = JSON.stringify(settings.criteria);
 
     if (debug) {
         console.log("Criteria tab:")
@@ -95,7 +97,7 @@ function askGradeMessage(settings, debug) {
 
     return {
         role: "user",
-        content: `Grade the project based on the following criteria csv table:\n${criteriaTab}\n\nOutput a json with this structure: { ID: { "status": STATUS } }, where ID is the id in the criteria tab, status is SUCCESS or FAIL?`
+        content: `Grade this released project based on the criteria conditions table:\n${criteriaTab}. `
     }
 }
 

@@ -16,7 +16,10 @@ async function minifyContent(filepath, content) {
 }
 
 async function minifyJava(content) {
-    return content.replace(/(?:\/\*.*?\*\/)|\/\/.*/g, '')
+    return content
+        .replace(/package .*;\n?/g, '\n')
+        .replace(/import .*;\n?/g, '\n')
+        .replace(/(?:\/\*.*?\*\/)|\/\/.*/g, '')
         .replace(/\/\*(?:(?!\*\/)[\s\S])*\*\/|[\r\n\t]+/g, '')
         .replace(/(\s)(={1,3}|<|>|<=|>=|\+=|\+{1,3}|\-=|!=|!==|!===|\+|\?|\:|\|\||&{1,2}|\/)(\s)/g, '$2')
         .replace(/\s+(?=\()|\s+(?=\))|\s+(?=\{)|\s+(?=\})/g, '')
