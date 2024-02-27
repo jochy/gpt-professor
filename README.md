@@ -8,7 +8,7 @@ After that, you can install the tool using `npm i -g gpt-professor`
 Make sure everything is working: 
 ```
 $ gpt-professor --version
-0.0.1
+0.0.8
 ```
 
 # Tools
