@@ -15,7 +15,7 @@ $ gpt-professor --version
 
 ## Measure percentage of generated content
 
-* Name: measure-generated-conterfiçk,fffvç,çv,ç,fçfçr!trdf                fvpmù^nt
+* Name: measure-generated-content
 * Description: This tool will scan a folder (or a file) and will compute the percentage of AI generated content. Relies on zerogpt api.
 * Arg: The path of the file or folder to scan
 * Options:
