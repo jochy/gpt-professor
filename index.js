@@ -4,6 +4,7 @@ const { program } = require('commander');
 const { measure } = require('./commands/measure/measure.js');
 const { autograde } = require('./commands/autograde/autograde.js');
 const { autograde: autogradeGemini } = require('./commands/autograde/autograde-gemini.js');
+const {feedback} = require("./commands/feedback/feedback");
 
 require('dotenv').config();
 
@@ -35,5 +36,14 @@ program
     .option('--minify', 'Indicates if we should minify the code before submitting it')
     .option('--debug', 'Indicates if we are in debug mode')
     .action((options, command) => autogradeGemini(options, command));
+
+program
+    .command('feedback')
+    .description('Automatically give a feedback to a Github repository')
+    .requiredOption('-c, --config [STRING]', 'Path to the config file')
+    .requiredOption('-r, --repo [STRING]', 'url')
+    .option('--minify', 'Indicates if we should minify the code before submitting it')
+    .option('--debug', 'Indicates if we are in debug mode')
+    .action((options, command) => feedback(options, command));
 
 program.parse(process.argv);

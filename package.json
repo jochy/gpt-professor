@@ -1,6 +1,6 @@
 {
   "name": "gpt-professor",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Tool used to create a simple CLI around ChatGPT, in order to help any kind of teaching activity",
   "main": "index.js",
   "bin": "./index.js",
@@ -8,7 +8,8 @@
     "test": "exit 0",
     "measure": "node index.js measure-generated-content file_test",
     "autograde": "node index.js autograde -c file_test/autograde2.json -r file_test -o file_test/professorgpt.json --minify --debug",
-    "autograde-gemini": "node index.js autograde-gemini -c file_test/autograde2.json -r file_test -o file_test/professorgpt.json --minify --debug"
+    "autograde-gemini": "node index.js autograde-gemini -c file_test/autograde2.json -r file_test -o file_test/professorgpt.json --minify --debug",
+    "feedback": "node index.js feedback -c file_test/feedback.json -r git@github.com:UE-WebX/projet-maar-2024-benghachemhamzamorozova.git --minify --debug"
   },
   "keywords": [
     "professor",
@@ -22,7 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "autoprefixer": "^10.4.15",
-    "axios": "^1.4.0",
+    "axios": "1.6.7",
     "bard-ai": "^2.0.3",
     "bluebird": "^3.7.2",
     "commander": "^11.0.0",
@@ -34,9 +35,11 @@
     "googlebard": "^1.0.7",
     "jsdom": "^22.1.0",
     "minify-xml": "^4.0.0",
+    "octokit": "^3.1.2",
     "openai": "^3.3.0",
     "pdf-parse": "^1.1.1",
     "postcss": "^8.4.29",
+    "shelljs": "^0.8.5",
     "uuid": "^9.0.1"
   },
   "compilerOptions": {

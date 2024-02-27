@@ -144,3 +144,41 @@ gpt-professor measure-generated-content /tmp/my-folder-to-scan
   "flutter": {"status": "FAIL"},
   "is_palindrome": {"status": "FAIL"}}
   ```
+
+## Give a feedback on a repository with ChatGPT4
+
+* Name: feedback
+* Description: Automatically give a feedback to a Github repository
+* Options:
+  * -c, --config: the feedback configuration path
+  * -r, --repo: the repository url (https or ssh) to feedback
+  * -s, --minify: does the script try to shrink files before sending them to the AI (to reduce token and billing)
+* Required env var: `OPENAI_API_KEY` (see [https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key](https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key))
+* Required env var: `GIT_PAT` (Github Personal Access Token, with issue write, and repo read permissions)
+* Optional env var: `OPENAI_BASE_URL` to set the endpoint to call (by default, its openai api production)
+* Example:
+  `feedback.json` (config file)
+  ```
+  {
+      "files": {
+          "include_patterns": [ "**/*.js", "**/*.vue" ],
+          "exclude_patterns": [ "**/node_modules/**", "babel.config.js" ]
+      },
+      "criteria": {
+          "use_vue_js": {
+              "condition": "Make sure the project is using vuejs"
+          },
+          "use_computed_property": {
+              "condition": "Make sure there is at least 1 computed property"
+          }
+      }
+  }
+  ```
+
+  Command:
+  ```
+  gpt-professor feedback -c file_test/feedback.json -r https://github.com/jochy/gpt-professor --minify --debug
+
+  Will send files to AI: [file_test/tp6/src/App.vue,file_test/tp6/src/main.js,file_test/tp6/src/router.js,file_test/tp6/src/store.js,file_test/tp6/src/components/TodoDetail.vue,file_test/tp6/src/components/home.vue,file_test/tp6/src/components/task.vue]
+  Feedback issue created
+  ```

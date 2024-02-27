@@ -8,6 +8,8 @@ async function minifyContent(filepath, content) {
             return await minifyJs(content);
         } else if (filepath.endsWith(".vue")) {
             return await minifyVue(content);
+        } else if (filepath.endsWith(".html") || filepath.endsWith(".xml") || filepath.endsWith(".xsd")) {
+            return await minifyHtml(content);
         }
     } catch (err) {
         console.error(err);
@@ -54,8 +56,8 @@ async function minifyCss(content) {
     const cssnano = await import('cssnano');
     const litePreset = await import('cssnano-preset-lite');
     const autoprefixer = await import('autoprefixer');
-    const preset = litePreset.default({ discardComments: true });
-    const minifiedCss = postcss.default([cssnano.default({ preset, plugins: [autoprefixer.default] })]).process(content);
+    const preset = litePreset.default({discardComments: true});
+    const minifiedCss = postcss.default([cssnano.default({preset, plugins: [autoprefixer.default]})]).process(content);
     return minifiedCss.css;
 }
 
@@ -72,7 +74,7 @@ async function minifyVue(content) {
         .replaceAll(' }}', '}}')
         .replaceAll('> {{', '>{{')
         .replaceAll('}} <', '}}<')
-        ;
+    ;
     let miniScript = await minifyJs(js);
     let miniCss = await minifyCss(style);
 
