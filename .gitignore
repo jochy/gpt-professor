@@ -129,6 +129,8 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-
+.idea/
 file_test/*
 !file_test/.keep
+
+*.iml

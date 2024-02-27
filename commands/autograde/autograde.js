@@ -1,7 +1,6 @@
 const fs = require('fs');
 const { Configuration, OpenAIApi } = require("openai");
-const path = require('path');
-const { minifyContent } = require('../../utils/minify');
+const {getFiles, filepathToAiMessage, sanitizeFile, readJson} = require('../../utils/files');
 
 async function autograde(options, command) {
     const { config, repo, output, minify, debug } = options;
@@ -18,7 +17,6 @@ async function autograde(options, command) {
     console.log("\nResult:")
     console.log(autograde);
 }
-
 
 async function askAiToAutograde(settings, files, repo, minify, debug) {
     const configuration = new Configuration({
@@ -40,9 +38,8 @@ async function askAiToAutograde(settings, files, repo, minify, debug) {
     }
 
     const chatCompletion = await openai.createChatCompletion({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4-0125-preview",
         messages: messagesToSend,
-        temperature: 1,
     });
 
     const response = chatCompletion.data.choices[0].message.content;
@@ -52,57 +49,7 @@ async function askAiToAutograde(settings, files, repo, minify, debug) {
         console.log(response);
     }
 
-    return response;
-}
-
-async function getFiles(repo, included, excluded) {
-    const { globby } = await import('globby')
-    if (excluded == null) excluded = [];
-    if (included == null) included = ['*'];
-
-    const patterns = [...included, ...excluded.map(it => "!" + it)]
-    return (await globby(patterns, {
-        cwd: repo
-    })).map(it => path.join(repo, it));
-}
-
-async function filepathToAiMessage(repo, filepath, minify) {
-    return {
-        role: "user",
-        content: `Location: ${filepath.replaceAll(`${repo}${path.sep}`, "")}\nContent:\n${await sanitizeFile(filepath, minify)}`
-    }
-}
-
-async function sanitizeFile(filepath, minify) {
-    let value = fs.readFileSync(filepath, 'utf8').trim();
-
-    if (minify) {
-        value = await minifyContent(filepath, value);
-    }
-
-    return value;
-}
-
-function askGradeMessage(settings, debug) {
-    let criteriaTab = "name;condition";
-    for (let crit of Object.keys(settings.criteria)) {
-        criteriaTab += `\n${crit};${settings.criteria[crit].condition}`;
-    }
-    criteriaTab = JSON.stringify(settings.criteria);
-
-    if (debug) {
-        console.log("Criteria tab:")
-        console.log(criteriaTab);
-    }
-
-    return {
-        role: "user",
-        content: `Grade this released project based on the criteria conditions table:\n${criteriaTab}. `
-    }
-}
-
-function readJson(file) {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
+    return response.substring(response.indexOf('{'), response.lastIndexOf('}') + 1);
 }
 
 module.exports = {
