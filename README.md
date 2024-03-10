@@ -166,9 +166,11 @@ gpt-professor measure-generated-content /tmp/my-folder-to-scan
       },
       "criteria": {
           "use_vue_js": {
+              "name": "Framework VUE.JS is used",
               "condition": "Make sure the project is using vuejs"
           },
           "use_computed_property": {
+              "name": "Computed properties should be used",
               "condition": "Make sure there is at least 1 computed property"
           }
       }

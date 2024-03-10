@@ -25,7 +25,7 @@ async function feedback(options, command) {
         console.log("Will send files to AI: [" + filesToSend + "]");
     }
 
-    const feedback = await askAiToFeedback(settings, filesToSend, repo, minify, debug);
+    const feedback = await askAiToFeedback(settings, filesToSend, folderPath, minify, debug);
 
     if (debug) {
         console.log("\nFeedback:")
@@ -41,7 +41,15 @@ async function feedback(options, command) {
         owner: repoSettings.owner,
         repo: repoSettings.repo,
         title: '[Feedback] Automatic feedback from gpt-professor',
-        body: `This is an automatic feedback, created with [gpt-professor](https://github.com/jochy/gpt-professor)\n\n---\n\n${feedback}\n\n---\n\nIf any questions, please add a comment and tag your teacher, otherwise, you can close this issue.\nIf you found it useful, please add a star on [gpt-professor](https://github.com/jochy/gpt-professor)`,
+        body: `
+This is an automatic feedback, created with [gpt-professor](https://github.com/jochy/gpt-professor), powered by ChatGPT-4.
+---
+${feedback}
+---
+If any questions, please add a comment and tag your teacher, otherwise, you can close this issue.
+---
+If you found it useful, please add a star on [gpt-professor](https://github.com/jochy/gpt-professor)
+*ChatGPT can make mistakes*`,
         assignees: [],
         labels: ['feedback'],
         headers: {
@@ -61,7 +69,7 @@ async function askAiToFeedback(settings, files, repo, minify, debug) {
     const messagesToSend = [
         {
             role: "system",
-            content: `This is a criteria list used to grade a project: ${JSON.stringify(settings.criteria)}. Each criteria has a name (the json key) and a condition (condition field). A criteria met when the condition is TRUE. Can you provide a feedback of this project, regarding the criteria table ?`
+            content: `This is a criteria list used to grade a project: ${JSON.stringify(settings.criteria)}. Each criteria has a name (name field) and a condition (condition field). A criteria is met when the condition is TRUE. I'll send you all the relevant files to grade this project. Can you provide a feedback of this project, regarding the criteria table (without printing the condition)?`
         }
     ];
 
