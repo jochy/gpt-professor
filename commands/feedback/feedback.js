@@ -1,6 +1,5 @@
 const {readJson, getFiles, filepathToAiMessage} = require("../../utils/files");
 const {Configuration, OpenAIApi} = require("openai");
-const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const shell = require('shelljs');
@@ -43,11 +42,17 @@ async function feedback(options, command) {
         title: '[Feedback] Automatic feedback from gpt-professor',
         body: `
 This is an automatic feedback, created with [gpt-professor](https://github.com/jochy/gpt-professor), powered by ChatGPT-4.
+
 ---
+
 ${feedback}
+
 ---
+
 If any questions, please add a comment and tag your teacher, otherwise, you can close this issue.
+
 ---
+
 If you found it useful, please add a star on [gpt-professor](https://github.com/jochy/gpt-professor)
 *ChatGPT can make mistakes*`,
         assignees: [],
@@ -85,6 +90,8 @@ async function askAiToFeedback(settings, files, repo, minify, debug) {
     const chatCompletion = await openai.createChatCompletion({
         model: "gpt-4-0125-preview",
         messages: messagesToSend,
+        temperature: 0.4,
+        top_p: 0.4,
     });
 
     const response = chatCompletion.data.choices[0].message.content;

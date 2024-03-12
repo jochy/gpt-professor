@@ -9,7 +9,7 @@
     "measure": "node index.js measure-generated-content file_test",
     "autograde": "node index.js autograde -c file_test/autograde2.json -r file_test -o file_test/professorgpt.json --minify --debug",
     "autograde-gemini": "node index.js autograde-gemini -c file_test/autograde2.json -r file_test -o file_test/professorgpt.json --minify --debug",
-    "feedback": "node index.js feedback -c file_test/feedback.json -r git@github.com:UE-WebX/projet-maar-2024-benghachemhamzamorozova.git --minify --debug"
+    "feedback": "node index.js feedback -c file_test/feedback.json -r git@github.com:UE-WebX/projet-maar-2024-reybarriere.git --minify --debug"
   },
   "keywords": [
     "professor",

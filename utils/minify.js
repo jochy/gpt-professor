@@ -34,6 +34,8 @@ async function minifyJava(content) {
         .replace(/( % )/g, '%')
         .replace(/: (?!["])/g, ':')
         .replace(/#([a-f0-9]+)\1([a-f0-9]+)\2([a-f0-9]+)\3/ig, '#$1$2$3')
+        .replace(/(.)@/g, '$1 @')
+        .replace(/\)([^;{}().+\-*/\]\[,?!=<>%])/g, ') $1')
         .replace(/\s\s/g, ' ');
 }
 
