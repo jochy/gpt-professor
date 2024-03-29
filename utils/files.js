@@ -9,7 +9,8 @@ async function getFiles(repo, included, excluded) {
 
     const patterns = [...included, ...excluded.map(it => "!" + it)]
     return (await globby(patterns, {
-        cwd: repo
+        cwd: repo,
+        caseSensitiveMatch: false,
     })).map(it => path.join(repo, it));
 }
 

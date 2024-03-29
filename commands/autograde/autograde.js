@@ -40,8 +40,8 @@ async function askAiToAutograde(settings, files, repo, minify, debug) {
     const chatCompletion = await openai.createChatCompletion({
         model: "gpt-4-0125-preview",
         messages: messagesToSend,
-        temperature: 0.4,
-        top_p: 0.4,
+        temperature: 0.3,
+        top_p: 0.2,
     });
 
     const response = chatCompletion.data.choices[0].message.content;
