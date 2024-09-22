@@ -5,6 +5,8 @@ const os = require('os');
 const shell = require('shelljs');
 const {v4: uuidv4} = require('uuid');
 const {Octokit} = require("octokit");
+const {z} = require("zod");
+const {zodResponseFormat} = require("openai/helpers/zod");
 
 async function feedback(options, command) {
     const {config, repo, minify, debug} = options;
@@ -31,21 +33,12 @@ async function feedback(options, command) {
         console.log(feedback);
     }
 
-    // Creating a github issue
-    const octokit = new Octokit({
-        auth: pat,
-    });
-
-    await octokit.request('POST /repos/{owner}/{repo}/issues', {
-        owner: repoSettings.owner,
-        repo: repoSettings.repo,
-        title: '[Feedback] Automatic feedback from gpt-professor',
-        body: `
+    let feedbackFormated = `
 This is an automatic feedback, created with [gpt-professor](https://github.com/jochy/gpt-professor), powered by ChatGPT-4.
 
 ---
 
-${feedback}
+${formatFeedback(feedback, settings.criteria)}
 
 ---
 
@@ -54,7 +47,18 @@ If any questions, please add a comment and tag your teacher, otherwise, you can 
 ---
 
 If you found it useful, please add a star on [gpt-professor](https://github.com/jochy/gpt-professor)
-*ChatGPT can make mistakes*`,
+*ChatGPT can make mistakes*`;
+
+    // Creating a github issue
+    const octokit = new Octokit({
+        auth: pat,
+    });
+
+    await octokit.request('POST /repos/{owner}/{repo}/issues', {
+        owner: repoSettings.owner,
+        repo: repoSettings.repo,
+        title: '[Feedback] Feedback from gpt-professor',
+        body: feedbackFormated,
         assignees: [],
         labels: ['feedback'],
         headers: {
@@ -66,10 +70,6 @@ If you found it useful, please add a star on [gpt-professor](https://github.com/
 }
 
 async function askAiToFeedback(settings, files, repo, minify, debug) {
-    const configuration = new Configuration({
-        apiKey: process.env.OPENAI_API_KEY,
-
-    });
     const openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
         baseURL: process.env.OPENAI_BASE_URL,
@@ -77,9 +77,17 @@ async function askAiToFeedback(settings, files, repo, minify, debug) {
     const messagesToSend = [
         {
             role: "system",
-            content: `This is a criteria list used to grade a project: ${JSON.stringify(settings.criteria)}. Each criteria has a name (name field) and a condition (condition field). A criteria is met when the condition is TRUE. I'll send you all the relevant files to grade this project. Can you provide a feedback of this project, regarding the criteria table (without printing the condition)?`
+            content: `Criteria list used to grade a project: ${JSON.stringify(settings.criteria)}. Each criteria has a name and a condition. A criteria is met when the condition is TRUE, otherwise it is not: there is no in between. Provide a feedback of this project, regarding the criteria table and give a small explanation for each criteria.`
         }
     ];
+
+    const objResponse = {};
+    for (let key of Object.keys(settings.criteria)) {
+        objResponse[key] = z.object({
+            status: z.enum(["PASS", "FAIL"]),
+            explanation: z.string(),
+        });
+    }
 
     for (let file of files) {
         messagesToSend.push(await filepathToAiMessage(repo, file, minify));
@@ -91,10 +99,11 @@ async function askAiToFeedback(settings, files, repo, minify, debug) {
     }
 
     const chatCompletion = await openai.beta.chat.completions.parse({
-        model: "gpt-4o",
+        model: "gpt-4o-2024-08-06",
         messages: messagesToSend,
         temperature: 0.3,
         top_p: 0.2,
+        response_format: zodResponseFormat(z.object(objResponse), "result"),
     });
 
     const response = chatCompletion.choices[0]?.message;
@@ -104,7 +113,7 @@ async function askAiToFeedback(settings, files, repo, minify, debug) {
         console.log(response);
     }
 
-    return response;
+    return response.parsed;
 }
 
 function repoUrlWithPAT(repo, pat) {
@@ -143,6 +152,18 @@ function cloneRepo(folderPath, repo, pat, debug) {
     if (debug) {
         console.log("Repository cloned in " + folderPath);
     }
+}
+
+function formatFeedback(feedback, criteria) {
+    let feedbacks = [];
+
+    for (let key of Object.keys(feedback)) {
+        feedbacks.push(`### ${criteria[key].name}
+- **Status**: ${feedback[key].status === 'PASS' ? "✅" : "❌"} ${feedback[key].status}
+- **Explanation**: ${feedback[key].explanation}`);
+    }
+
+    return feedbacks.join("\n\n");
 }
 
 module.exports = {
