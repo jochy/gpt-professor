@@ -1,9 +1,11 @@
 const fs = require('fs');
-const { Configuration, OpenAIApi } = require("openai");
+const OpenAI = require('openai/index');
+const {zodResponseFormat} = require('openai/helpers/zod');
 const {getFiles, filepathToAiMessage, sanitizeFile, readJson} = require('../../utils/files');
+const {z} = require('zod');
 
 async function autograde(options, command) {
-    const { config, repo, output, minify, debug } = options;
+    const {config, repo, output, minify, debug} = options;
 
     const settings = readJson(config);
     const filesToSend = await getFiles(repo, settings.files.include_patterns, settings.files.exclude_patterns);
@@ -19,14 +21,23 @@ async function autograde(options, command) {
 }
 
 async function askAiToAutograde(settings, files, repo, minify, debug) {
-    const configuration = new Configuration({
+    const client = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
-
+        baseURL: process.env.OPENAI_BASE_URL,
     });
-    const openai = new OpenAIApi(configuration, process.env.OPENAI_BASE_URL);
     const messagesToSend = [
-        { role: "system", content: `This is a criteria list used to grade a project: ${JSON.stringify(settings.criteria)}. Each criteria has a name (the json key) and a condition (condition field). A criteria met when the condition is TRUE. Your answer should be only a JSON structure: { NAME: { "status": STATUS } }, where NAME is the criteria name and status is SUCCESS or FAIL. If the criteria's condition is met, then the status is SUCCESS otherwise the status if FAIL. If something is missing, consider the criteria's condition as FAIL.` }
+        {
+            role: "system",
+            content: `Criteria list to grade a project: ${JSON.stringify(settings.criteria)}. Each criteria has a name (the json key) and a condition. A criteria is met when the condition is TRUE. If the criteria's condition is met, then the status is PASS otherwise it is FAIL. If something is missing, then it is FAIL.`
+        }
     ];
+
+    const objResponse = {};
+    for (let key of Object.keys(settings.criteria)) {
+        objResponse[key] = z.object({
+            status: z.enum(["PASS", "FAIL"]),
+        });
+    }
 
     for (let file of files) {
         messagesToSend.push(await filepathToAiMessage(repo, file, minify));
@@ -37,21 +48,21 @@ async function askAiToAutograde(settings, files, repo, minify, debug) {
         console.log(messagesToSend.map(it => it.content).join("\n"))
     }
 
-    const chatCompletion = await openai.createChatCompletion({
-        model: "gpt-4-0125-preview",
+    const chatCompletion = await client.beta.chat.completions.parse({
+        model: "gpt-4o-2024-08-06",
         messages: messagesToSend,
         temperature: 0.3,
         top_p: 0.2,
+        response_format: zodResponseFormat(z.object(objResponse), "result"),
     });
 
-    const response = chatCompletion.data.choices[0].message.content;
+    const response = chatCompletion.choices[0]?.message;
 
     if (debug) {
-        console.log("Response from AI:");
-        console.log(response);
+        console.log(response.parsed);
     }
 
-    return response.substring(response.indexOf('{'), response.lastIndexOf('}') + 1);
+    return JSON.stringify(response.parsed);
 }
 
 module.exports = {

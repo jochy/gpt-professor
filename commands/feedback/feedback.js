@@ -1,5 +1,5 @@
 const {readJson, getFiles, filepathToAiMessage} = require("../../utils/files");
-const {Configuration, OpenAIApi} = require("openai");
+const OpenAI = require('openai/index');
 const path = require('path');
 const os = require('os');
 const shell = require('shelljs');
@@ -70,7 +70,10 @@ async function askAiToFeedback(settings, files, repo, minify, debug) {
         apiKey: process.env.OPENAI_API_KEY,
 
     });
-    const openai = new OpenAIApi(configuration, process.env.OPENAI_BASE_URL);
+    const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+        baseURL: process.env.OPENAI_BASE_URL,
+    });
     const messagesToSend = [
         {
             role: "system",
@@ -87,14 +90,14 @@ async function askAiToFeedback(settings, files, repo, minify, debug) {
         console.log(messagesToSend.map(it => it.content).join("\n"))
     }
 
-    const chatCompletion = await openai.createChatCompletion({
-        model: "gpt-4-0125-preview",
+    const chatCompletion = await openai.beta.chat.completions.parse({
+        model: "gpt-4o",
         messages: messagesToSend,
         temperature: 0.3,
         top_p: 0.2,
     });
 
-    const response = chatCompletion.data.choices[0].message.content;
+    const response = chatCompletion.choices[0]?.message;
 
     if (debug) {
         console.log("Response from AI:");
